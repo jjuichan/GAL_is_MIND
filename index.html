@@ -329,15 +329,24 @@
                 try {
                     const { doc, setDoc } = window.firebaseModules;
                     const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'user_settings', 'config');
-                    await setDoc(settingsRef, {
+                    
+                    // 🔥 무한 로딩 방지! 8초 타임아웃 안전장치 추가
+                    const savePromise = setDoc(settingsRef, {
                         customApiKey: customApiKey,
                         selectedModel: selectedModel
                     }, { merge: true }); 
+                    
+                    await Promise.race([
+                        savePromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                    ]);
+
                     setSettingsSaveMsg("설정 저장 완료! ✨ (새로고침해도 안 날아가요!)");
                     setTimeout(() => setSettingsSaveMsg(""), 3000);
                 } catch (err) {
-                    setSettingsSaveMsg("저장 실패 ㅠㅠ");
-                    setTimeout(() => setSettingsSaveMsg(""), 3000);
+                    console.error("설정 저장 에러:", err);
+                    setSettingsSaveMsg("저장 실패 ㅠㅠ (파이어베이스 Firestore Database를 만들었는지 확인해줘!)");
+                    setTimeout(() => setSettingsSaveMsg(""), 5000);
                 } finally {
                     setIsSettingsSaving(false);
                 }
@@ -358,16 +367,25 @@
                 
                 try {
                     const thoughtsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'gyaru_thoughts');
-                    await addDoc(thoughtsRef, {
+                    
+                    // 🔥 무한 로딩 방지! 8초 타임아웃 안전장치 추가
+                    const savePromise = addDoc(thoughtsRef, {
                         originalText: inputText,
                         gyaruText: outputText,
                         createdAt: Date.now() 
                     });
+
+                    await Promise.race([
+                        savePromise,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+                    ]);
                     
                     setInputText("");
                     setOutputText("");
                 } catch (err) {
-                    setError("저장하는데 문제가 생겼어 ㅠㅠ 다시 시도해줘!");
+                    console.error("다이어리 저장 에러:", err);
+                    setError("저장하는데 문제가 생겼어 ㅠㅠ (파이어베이스 Firestore Database를 만들었는지 확인해줘!)");
+                    setTimeout(() => setError(""), 5000);
                 } finally {
                     setIsSaving(false);
                 }
