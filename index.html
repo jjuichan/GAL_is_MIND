@@ -21,10 +21,10 @@
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Expose Firebase modules to global scope for React
-        window.firebaseModules = { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc };
+        window.firebaseModules = { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc };
     </script>
 
     <style>
@@ -125,6 +125,8 @@
             const [customApiKey, setCustomApiKey] = useState("");
             const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash-preview-09-2025");
             const [showSettings, setShowSettings] = useState(false);
+            const [isSettingsSaving, setIsSettingsSaving] = useState(false);
+            const [settingsSaveMsg, setSettingsSaveMsg] = useState("");
 
             // 1. Initialize Firebase
             useEffect(() => {
@@ -196,7 +198,23 @@
                 // 로그인이 안 되어있으면 다이어리를 불러오지 않음
                 if (!user || !db) return;
 
-                const { collection, onSnapshot } = window.firebaseModules;
+                const { collection, onSnapshot, doc, getDoc } = window.firebaseModules;
+
+                // 🔥 설정값(API 키 등) 불러오기
+                const fetchSettings = async () => {
+                    try {
+                        const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'user_settings', 'config');
+                        const docSnap = await getDoc(settingsRef);
+                        if (docSnap.exists()) {
+                            const data = docSnap.data();
+                            if (data.customApiKey) setCustomApiKey(data.customApiKey);
+                            if (data.selectedModel) setSelectedModel(data.selectedModel);
+                        }
+                    } catch (err) {
+                        console.error("설정 불러오기 에러:", err);
+                    }
+                };
+                fetchSettings();
                 
                 const thoughtsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'gyaru_thoughts');
 
@@ -310,6 +328,27 @@
                     window.location.reload(); 
                 } catch (err) {
                     setError("로그아웃에 실패했어 ㅠㅠ");
+                }
+            };
+
+            const handleSaveSettings = async () => {
+                if (!user || !db) return;
+                setIsSettingsSaving(true);
+                setSettingsSaveMsg("");
+                try {
+                    const { doc, setDoc } = window.firebaseModules;
+                    const settingsRef = doc(db, 'artifacts', appId, 'users', user.uid, 'user_settings', 'config');
+                    await setDoc(settingsRef, {
+                        customApiKey: customApiKey,
+                        selectedModel: selectedModel
+                    }, { merge: true }); // 기존 데이터에 덮어쓰기
+                    setSettingsSaveMsg("설정 저장 완료! ✨");
+                    setTimeout(() => setSettingsSaveMsg(""), 3000);
+                } catch (err) {
+                    setSettingsSaveMsg("저장 실패 ㅠㅠ");
+                    setTimeout(() => setSettingsSaveMsg(""), 3000);
+                } finally {
+                    setIsSettingsSaving(false);
                 }
             };
 
@@ -432,9 +471,22 @@
                                     onChange={(e) => setCustomApiKey(e.target.value)}
                                     className="w-full p-3 rounded-xl border-2 border-gray-200 bg-white focus:outline-none focus:border-pink-500 mb-2 font-mono text-sm"
                                 />
-                                <p className="text-xs text-gray-400">
-                                    * API 키는 브라우저에만 임시 보관되며 절대 서버에 저장되지 않아요!
+                                <p className="text-xs text-gray-400 mb-4">
+                                    * 입력하신 API 키는 회원님의 비공개 계정 데이터에 안전하게 저장됩니다!
                                 </p>
+
+                                <button 
+                                    onClick={handleSaveSettings}
+                                    disabled={isSettingsSaving}
+                                    className="w-full py-2 bg-pink-400 text-white font-bold rounded-xl hover:bg-pink-500 transition-all gyaru-shadow-sm btn-press"
+                                >
+                                    {isSettingsSaving ? '저장 중...' : '설정 저장하기 💾'}
+                                </button>
+                                {settingsSaveMsg && (
+                                    <p className={`text-sm font-bold mt-2 text-center ${settingsSaveMsg.includes('완료') ? 'text-pink-500' : 'text-red-500'}`}>
+                                        {settingsSaveMsg}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
