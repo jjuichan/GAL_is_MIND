@@ -30,7 +30,6 @@
     <style>
         body {
             background-color: #fdf2f8; /* pink-50 */
-            /* 💖 폰트 이름에서 + 기호를 빼고 띄어쓰기로 바꿔야 해요! 💖 */
             font-family: 'Gamja Flower', cursive, sans-serif;
             background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
             background-size: 20px 20px;
@@ -57,7 +56,6 @@
 <body>
     <script>
         // --- PWA (Progressive Web App) 동적 설정 ---
-        // 1. 단일 HTML 파일에서도 PWA로 인식되도록 Manifest를 동적으로 주입합니다.
         const manifest = {
             name: "✨ 갸루식 사고 변환기",
             short_name: "갸루사고",
@@ -75,7 +73,6 @@
         const manifestUrl = URL.createObjectURL(manifestBlob);
         document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestUrl}">`);
 
-        // 2. 동적 Service Worker 등록 (오프라인 지원 및 앱 설치 요건 충족)
         const swCode = `
             self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
             self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
@@ -95,7 +92,7 @@
     <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef } = React;
 
-        // 🔥 회원님의 파이어베이스 설정값 (그대로 유지했어요!) 🔥
+        // 🔥 회원님의 파이어베이스 설정값 🔥
         const firebaseConfig = {
           apiKey: "AIzaSyBI23qSkSmve5R39uD_02PYDSEYu_np7Fc",
           authDomain: "gal-is-mind.firebaseapp.com",
@@ -135,13 +132,13 @@
                         await new Promise(r => setTimeout(r, 50));
                     }
 
-                    const { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, getFirestore, getRedirectResult } = window.firebaseModules;
+                    const { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, onAuthStateChanged, getFirestore, getRedirectResult } = window.firebaseModules;
                     
                     try {
                         let finalConfig = typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey ? firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
 
                         if (!finalConfig || !finalConfig.apiKey) {
-                            setError("앗! 깃허브 코드 안에 Firebase 설정값을 아직 안 채워 넣은 것 같아! 코드를 열어서 설정을 붙여넣어 줘 ㅠㅠ");
+                            setError("앗! Firebase 설정값이 없어요!");
                             setIsAuthLoading(false);
                             return;
                         }
@@ -155,31 +152,22 @@
                             setAppId(__app_id);
                         }
 
-                        // 🔥 구글 로그인(리다이렉트) 결과 받아오기
+                        // 🔥 구글 로그인 결과 받아오기
                         try {
                             await getRedirectResult(auth);
                         } catch (redirectErr) {
                             console.error("Redirect Error:", redirectErr);
                         }
 
-                        // Call Auth First
+                        // 🔥 [수정됨] 캔버스 환경이 아닐 때는 성급하게 익명 로그인하지 않고, Firebase가 구글 로그인 상태를 불러올 때까지 얌전히 기다립니다!
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            if (!auth.currentUser) {
-                                try {
-                                    await signInAnonymously(auth);
-                                } catch (anonErr) {
-                                    // 🔥 익명 로그인이 막혀있어도 여기서 에러를 내뿜지 않고 그냥 넘어갑니다! 
-                                    // 쿨하게 구글 로그인만 유도하면 되니까 완전 럭키비키!
-                                    console.warn("익명 로그인이 꺼져있어 패스합니다!");
-                                }
-                            }
                         }
 
+                        // 사용자 로그인 상태가 확인되면 (구글 로그인 완료 상태면)
                         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                             setUser(currentUser);
-                            setIsAuthLoading(false);
+                            setIsAuthLoading(false); // 드디어 로딩 끝!
                         });
 
                         return () => unsubscribe();
@@ -216,6 +204,7 @@
                 };
                 fetchSettings();
                 
+                // 🔥 과거 변환 내역 (갸루 다이어리) 불러오기
                 const thoughtsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'gyaru_thoughts');
 
                 const unsubscribe = onSnapshot(thoughtsRef, (snapshot) => {
@@ -224,6 +213,7 @@
                         thoughts.push({ id: doc.id, ...doc.data() });
                     });
                     
+                    // 최신순으로 정렬
                     thoughts.sort((a, b) => {
                         const timeA = a.createdAt ? a.createdAt : 0;
                         const timeB = b.createdAt ? b.createdAt : 0;
@@ -325,7 +315,12 @@
                     const auth = getAuth();
                     await signOut(auth);
                     setShowSettings(false);
-                    window.location.reload(); 
+                    
+                    // 로그아웃 시 화면 정보 리셋
+                    setUser(null);
+                    setSavedThoughts([]);
+                    setCustomApiKey("");
+                    setSelectedModel("gemini-2.5-flash-preview-09-2025");
                 } catch (err) {
                     setError("로그아웃에 실패했어 ㅠㅠ");
                 }
@@ -341,8 +336,8 @@
                     await setDoc(settingsRef, {
                         customApiKey: customApiKey,
                         selectedModel: selectedModel
-                    }, { merge: true }); // 기존 데이터에 덮어쓰기
-                    setSettingsSaveMsg("설정 저장 완료! ✨");
+                    }, { merge: true }); 
+                    setSettingsSaveMsg("설정 저장 완료! ✨ (새로고침해도 안 날아가요!)");
                     setTimeout(() => setSettingsSaveMsg(""), 3000);
                 } catch (err) {
                     setSettingsSaveMsg("저장 실패 ㅠㅠ");
@@ -353,8 +348,8 @@
             };
 
             const handleSave = async () => {
-                // 🔥 로그인(user)이 안 되어있으면 다이어리 저장을 막고 안내해 줍니다!
-                if (!user || user.isAnonymous === false && !user.uid) {
+                // 로그인(user)이 안 되어있으면 다이어리 저장을 막고 안내해 줍니다!
+                if (!user) {
                     setError("앗! 다이어리에 긍정 에너지를 저장하려면 우측 상단 ⚙️설정에서 '구글 연동'을 먼저 해줘! ✨");
                     setTimeout(() => setError(""), 5000);
                     return;
@@ -431,7 +426,7 @@
                                     <div className="w-full py-3 bg-white border-2 border-pink-200 text-pink-400 font-bold rounded-xl text-center">
                                         로그인 정보 확인 중... 💖
                                     </div>
-                                ) : (user && !user.isAnonymous) ? (
+                                ) : user ? (
                                     <div className="flex items-center justify-between bg-white p-3 rounded-xl border-2 border-pink-100 shadow-sm">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-lg">👤</div>
@@ -477,10 +472,10 @@
 
                                 <button 
                                     onClick={handleSaveSettings}
-                                    disabled={isSettingsSaving}
-                                    className="w-full py-2 bg-pink-400 text-white font-bold rounded-xl hover:bg-pink-500 transition-all gyaru-shadow-sm btn-press"
+                                    disabled={isSettingsSaving || !user}
+                                    className={`w-full py-2 font-bold rounded-xl transition-all gyaru-shadow-sm btn-press ${!user ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-pink-400 text-white hover:bg-pink-500'}`}
                                 >
-                                    {isSettingsSaving ? '저장 중...' : '설정 저장하기 💾'}
+                                    {!user ? '먼저 로그인해주세요!' : (isSettingsSaving ? '저장 중...' : '설정 저장하기 💾')}
                                 </button>
                                 {settingsSaveMsg && (
                                     <p className={`text-sm font-bold mt-2 text-center ${settingsSaveMsg.includes('완료') ? 'text-pink-500' : 'text-red-500'}`}>
@@ -544,18 +539,26 @@
                             </div>
                             <button
                                 onClick={handleSave}
-                                disabled={isSaving}
-                                className={`w-full py-3 rounded-2xl font-bold text-lg text-yellow-900 border-2 transition-all btn-press
-                                    ${isSaving ? 'bg-yellow-200 border-yellow-300 cursor-not-allowed' : 'bg-yellow-300 border-yellow-400 hover:bg-yellow-400 gyaru-shadow-sm'}`}
+                                disabled={isSaving || !user}
+                                className={`w-full py-3 rounded-2xl font-bold text-lg border-2 transition-all btn-press
+                                    ${(!user || isSaving) ? 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed' : 'bg-yellow-300 text-yellow-900 border-yellow-400 hover:bg-yellow-400 gyaru-shadow-sm'}`}
                             >
-                                {isSaving ? '저장 중이야... 💾' : '이 긍정 에너지 다이어리에 킵하기! 💖'}
+                                {!user ? '로그인하고 다이어리에 킵하기! 💖' : (isSaving ? '저장 중이야... 💾' : '이 긍정 에너지 다이어리에 킵하기! 💖')}
                             </button>
                         </div>
                     )}
 
-                    {/* History Section */}
-                    {savedThoughts.length > 0 && (
-                        <div className="w-full max-w-2xl fade-in">
+                    {/* History Section - 로그인 안 되어있을 때 안내 문구 추가 */}
+                    {!isAuthLoading && !user && (
+                        <div className="w-full max-w-2xl text-center py-8 bg-white/50 rounded-3xl border-2 border-dashed border-pink-300 fade-in">
+                            <p className="text-pink-500 font-bold text-lg mb-2">과거의 갸루 다이어리를 보고 싶다면?</p>
+                            <p className="text-pink-400 text-sm">우측 상단 ⚙️설정에서 구글 연동을 먼저 해주세요! ✨</p>
+                        </div>
+                    )}
+
+                    {/* History Section - 로그인 되어있고 기록이 있을 때 */}
+                    {user && savedThoughts.length > 0 && (
+                        <div className="w-full max-w-2xl fade-in mt-4">
                             <h3 className="text-2xl font-bold text-pink-600 mb-6 flex items-center gap-2">
                                 <span>📖</span> 내 반짝반짝 갸루 다이어리
                             </h3>
