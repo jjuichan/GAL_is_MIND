@@ -140,10 +140,10 @@
                     
                     try {
                         // Canvas 미리보기 환경이거나 깃허브 환경에 맞게 설정값 로드
-                        let finalConfig = myFirebaseConfig.apiKey ? myFirebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
+                        let finalConfig = typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey ? firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
 
                         if (!finalConfig || !finalConfig.apiKey) {
-                            setError("앗! 깃허브 코드 안에 Firebase 설정값(myFirebaseConfig)을 아직 안 채워 넣은 것 같아! 코드를 열어서 설정을 붙여넣어 줘 ㅠㅠ");
+                            setError("앗! 깃허브 코드 안에 Firebase 설정값을 아직 안 채워 넣은 것 같아! 코드를 열어서 설정을 붙여넣어 줘 ㅠㅠ");
                             setIsAuthLoading(false);
                             return;
                         }
@@ -303,7 +303,7 @@
                     
                 } catch (err) {
                     console.error("Login Error:", err);
-                    setError("구글 로그인 페이지로 이동하는데 실패했어 ㅠㅠ");
+                    setError(`구글 로그인 페이지 이동 실패 ㅠㅠ 상세이유: ${err.message}`);
                     setIsAuthLoading(false);
                 }
             };
