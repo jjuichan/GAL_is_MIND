@@ -17,14 +17,14 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Firebase SDKs -->
+    <!-- Firebase SDKs (🔥 리디렉션 대신 다시 signInWithPopup으로 변경!) -->
     <script type="module">
         import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Expose Firebase modules to global scope for React
-        window.firebaseModules = { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc };
+        window.firebaseModules = { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc };
     </script>
 
     <style>
@@ -132,7 +132,7 @@
                         await new Promise(r => setTimeout(r, 50));
                     }
 
-                    const { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, onAuthStateChanged, getFirestore, getRedirectResult } = window.firebaseModules;
+                    const { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, onAuthStateChanged, getFirestore } = window.firebaseModules;
                     
                     try {
                         let finalConfig = typeof firebaseConfig !== 'undefined' && firebaseConfig.apiKey ? firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
@@ -152,14 +152,7 @@
                             setAppId(__app_id);
                         }
 
-                        // 🔥 구글 로그인 결과 받아오기
-                        try {
-                            await getRedirectResult(auth);
-                        } catch (redirectErr) {
-                            console.error("Redirect Error:", redirectErr);
-                        }
-
-                        // 🔥 [수정됨] 캔버스 환경이 아닐 때는 성급하게 익명 로그인하지 않고, Firebase가 구글 로그인 상태를 불러올 때까지 얌전히 기다립니다!
+                        // Canvas 환경일 때만 필요한 커스텀 토큰 로그인
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         }
@@ -294,17 +287,20 @@
                 }
             };
 
+            // 🔥 가장 안정적인 팝업 로그인으로 복귀! 🔥
             const handleGoogleLogin = async () => {
                 try {
                     setIsAuthLoading(true);
-                    const { getAuth, GoogleAuthProvider, signInWithRedirect } = window.firebaseModules;
+                    const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
                     const auth = getAuth();
                     const provider = new GoogleAuthProvider();
                     
-                    await signInWithRedirect(auth, provider);
+                    // 팝업창을 띄워서 로그인! 화면이 넘어가지 않아서 기억상실 에러가 없어요.
+                    await signInWithPopup(auth, provider);
+                    // 팝업이 닫히면 바로 onAuthStateChanged가 작동해서 자동으로 유저를 인식합니다.
                 } catch (err) {
                     console.error("Login Error:", err);
-                    setError(`구글 로그인 페이지 이동 실패 ㅠㅠ 상세이유: ${err.message}`);
+                    setError(`팝업이 차단되었어 ㅠㅠ 브라우저 주소창이나 설정에서 '팝업 허용'을 꼭 눌러줘! (상세이유: ${err.message})`);
                     setIsAuthLoading(false);
                 }
             };
