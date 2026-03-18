@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
     <!-- 💖 귀여운 구글 폰트 (Jua) 추가 💖 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gaegu&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,18 +20,19 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // 🔥 signInWithPopup 대신 signInWithRedirect 와 getRedirectResult 를 가져옵니다!
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Expose Firebase modules to global scope for React
-        window.firebaseModules = { initializeApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc };
+        window.firebaseModules = { initializeApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc };
     </script>
 
     <style>
         body {
             background-color: #fdf2f8; /* pink-50 */
             /* 💖 폰트를 Jua 폰트로 변경! 💖 */
-            font-family: 'Gaegu', sans-serif;
+            font-family: 'Gamja+Flower', sans-serif;
             background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
             background-size: 20px 20px;
         }
@@ -112,6 +113,7 @@
             const [user, setUser] = useState(null);
             const [db, setDb] = useState(null);
             const [appId, setAppId] = useState('default-gyaru-app');
+            const [isAuthLoading, setIsAuthLoading] = useState(true); // 로그인 로딩 상태 추가
             
             // App States
             const [inputText, setInputText] = useState("");
@@ -134,7 +136,7 @@
                         await new Promise(r => setTimeout(r, 50));
                     }
 
-                    const { initializeApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, getFirestore } = window.firebaseModules;
+                    const { initializeApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, getFirestore, getRedirectResult } = window.firebaseModules;
                     
                     try {
                         // Canvas 미리보기 환경이거나 깃허브 환경에 맞게 설정값 로드
@@ -142,6 +144,7 @@
 
                         if (!finalConfig || !finalConfig.apiKey) {
                             setError("앗! 깃허브 코드 안에 Firebase 설정값(myFirebaseConfig)을 아직 안 채워 넣은 것 같아! 코드를 열어서 설정을 붙여넣어 줘 ㅠㅠ");
+                            setIsAuthLoading(false);
                             return;
                         }
 
@@ -154,21 +157,34 @@
                             setAppId(__app_id);
                         }
 
+                        // 🔥 리다이렉트 로그인 결과 확인하기
+                        try {
+                            await getRedirectResult(auth);
+                        } catch (redirectErr) {
+                            console.error("Redirect Error:", redirectErr);
+                            // 에러가 나더라도 무시하고 익명 로그인으로 넘어가도록 처리
+                        }
+
                         // Call Auth First (MANDATORY RULE 3)
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } else {
-                            await signInAnonymously(auth);
+                            // 이미 리다이렉트로 로그인된 유저가 없다면 익명 로그인
+                            if (!auth.currentUser) {
+                                await signInAnonymously(auth);
+                            }
                         }
 
                         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
                             setUser(currentUser);
+                            setIsAuthLoading(false);
                         });
 
                         return () => unsubscribe();
                     } catch (err) {
                         console.error("Firebase init error:", err);
                         setError("시스템을 초기화하는 데 문제가 생겼어 ㅠㅠ (Firebase Error)");
+                        setIsAuthLoading(false);
                     }
                 };
                 
@@ -274,16 +290,21 @@
                 }
             };
 
+            // 🔥 팝업 대신 리다이렉트(화면 이동) 방식으로 변경!
             const handleGoogleLogin = async () => {
                 try {
-                    const { getAuth, GoogleAuthProvider, signInWithPopup } = window.firebaseModules;
+                    setIsAuthLoading(true);
+                    const { getAuth, GoogleAuthProvider, signInWithRedirect } = window.firebaseModules;
                     const auth = getAuth();
                     const provider = new GoogleAuthProvider();
-                    await signInWithPopup(auth, provider);
-                    setShowSettings(false);
+                    
+                    // 현재 페이지에서 구글 로그인 페이지로 완전히 넘어갔다가 다시 돌아옵니다.
+                    await signInWithRedirect(auth, provider);
+                    
                 } catch (err) {
                     console.error("Login Error:", err);
-                    setError("구글 로그인 팝업이 차단되었거나 실패했어! 브라우저의 팝업 차단을 해제해 줘 ㅠㅠ");
+                    setError("구글 로그인 페이지로 이동하는데 실패했어 ㅠㅠ");
+                    setIsAuthLoading(false);
                 }
             };
 
@@ -367,7 +388,12 @@
                                 <p className="text-xs text-gray-600 mb-3 leading-relaxed">
                                     구글 계정으로 로그인하면 어떤 기기에서든 내 갸루 다이어리를 이어서 볼 수 있어! 브라우저 메뉴의 <strong>'홈 화면에 추가(앱 설치)'</strong>를 누르면 진짜 앱처럼 쓸 수도 있다구 ✨
                                 </p>
-                                {user && !user.isAnonymous ? (
+                                
+                                {isAuthLoading ? (
+                                    <div className="w-full py-3 bg-white border-2 border-pink-200 text-pink-400 font-bold rounded-xl text-center">
+                                        로그인 정보 확인 중... 💖
+                                    </div>
+                                ) : (user && !user.isAnonymous) ? (
                                     <div className="flex items-center justify-between bg-white p-3 rounded-xl border-2 border-pink-100 shadow-sm">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 bg-pink-200 rounded-full flex items-center justify-center text-lg">👤</div>
