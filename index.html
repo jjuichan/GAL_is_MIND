@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>✨ 초긍정 갸루식 사고 변환기 ✨</title>
+    
+    <!-- 💖 귀여운 구글 폰트 (Jua) 추가 💖 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React & ReactDOM -->
@@ -24,7 +30,8 @@
     <style>
         body {
             background-color: #fdf2f8; /* pink-50 */
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+            /* 💖 폰트를 Jua 폰트로 변경! 💖 */
+            font-family: 'Jua', sans-serif;
             background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
             background-size: 20px 20px;
         }
@@ -88,6 +95,18 @@
     <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef } = React;
 
+        // 🔥🔥🔥 [매우 중요] 깃허브에 올릴 땐 아래 빈칸에 본인의 파이어베이스 설정값을 꼭 붙여넣으세요! 🔥🔥🔥
+        // 복사하는 곳: 파이어베이스 콘솔 -> 왼쪽 위 톱니바퀴(프로젝트 설정) -> 일반 탭 맨 아래 '내 앱'의 SDK 설정 및 구성
+        const firebaseConfig = {
+  apiKey: "AIzaSyBI23qSkSmve5R39uD_02PYDSEYu_np7Fc",
+  authDomain: "gal-is-mind.firebaseapp.com",
+  projectId: "gal-is-mind",
+  storageBucket: "gal-is-mind.firebasestorage.app",
+  messagingSenderId: "749452331708",
+  appId: "1:749452331708:web:f0ffe03721fdff03621eb9",
+  measurementId: "G-026RXFKFWK"
+};
+
         function App() {
             // Firebase States
             const [user, setUser] = useState(null);
@@ -118,8 +137,15 @@
                     const { initializeApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, getFirestore } = window.firebaseModules;
                     
                     try {
-                        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-                        const app = initializeApp(firebaseConfig);
+                        // Canvas 미리보기 환경이거나 깃허브 환경에 맞게 설정값 로드
+                        let finalConfig = myFirebaseConfig.apiKey ? myFirebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null);
+
+                        if (!finalConfig || !finalConfig.apiKey) {
+                            setError("앗! 깃허브 코드 안에 Firebase 설정값(myFirebaseConfig)을 아직 안 채워 넣은 것 같아! 코드를 열어서 설정을 붙여넣어 줘 ㅠㅠ");
+                            return;
+                        }
+
+                        const app = initializeApp(finalConfig);
                         const auth = getAuth(app);
                         const firestoreDb = getFirestore(app);
                         setDb(firestoreDb);
