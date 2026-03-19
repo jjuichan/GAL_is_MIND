@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ 초긍정 갸루식 사고 변환기 ✨</title>
+    <title>🌺 GAL is MIND 🌺</title>
     
+    <!-- 💖 진짜 PWA 필수 설정 연결 (가장 위로 올렸어요!) 💖 -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon-192.png"> <!-- 아이폰(사파리)용 아이콘 강제 지정 -->
+
     <!-- 💖 귀여운 구글 폰트 (Gamja Flower) 추가 💖 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,20 +27,18 @@
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Expose Firebase modules to global scope for React
         window.firebaseModules = { initializeApp, getApps, getApp, getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, setDoc, getDoc };
     </script>
 
     <style>
         body {
-            background-color: #fdf2f8; /* pink-50 */
+            background-color: #fdf2f8; 
             font-family: 'Gamja Flower', cursive, sans-serif;
-            /* 💖 원래의 깔끔하고 귀여운 핑크 도트 배경으로 롤백! 💖 */
             background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
             background-size: 20px 20px;
         }
         .gyaru-shadow {
-            box-shadow: 8px 8px 0px 0px #f472b6; /* pink-400 */
+            box-shadow: 8px 8px 0px 0px #f472b6; 
         }
         .gyaru-shadow-sm {
             box-shadow: 4px 4px 0px 0px #f472b6;
@@ -55,14 +57,13 @@
     </style>
 </head>
 <body>
-    <!-- 💖 진짜 PWA 필수 설정 연결 💖 -->
-    <link rel="manifest" href="./manifest.json">
+    
     <script>
-        // PWA 서비스 워커 등록
+        // PWA 서비스 워커 등록 (안정성 강화)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('PWA 서비스 워커 등록 성공! ✨'))
+                navigator.serviceWorker.register('./sw.js', { scope: './' })
+                    .then(reg => console.log('PWA 서비스 워커 등록 성공! ✨', reg.scope))
                     .catch(err => console.log('PWA 등록 실패 ㅠㅠ', err));
             });
         }
@@ -109,12 +110,11 @@
             // PWA Install State
             const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-            // 0. PWA 설치 이벤트 감지
             useEffect(() => {
                 window.addEventListener('beforeinstallprompt', (e) => {
-                    // 기본 팝업 뜨는 걸 막고 우리가 만든 버튼으로 띄울 준비!
                     e.preventDefault();
                     setDeferredPrompt(e);
+                    console.log("설치 프롬프트 캐치 완료! ✨");
                 });
             }, []);
 
@@ -326,7 +326,7 @@
                     setTimeout(() => setSettingsSaveMsg(""), 3000);
                 } catch (err) {
                     console.error("설정 저장 에러:", err);
-                    setSettingsSaveMsg("저장 실패 ㅠㅠ (Firestore Database 생성 확인!)");
+                    setSettingsSaveMsg("저장 실패 ㅠㅠ");
                     setTimeout(() => setSettingsSaveMsg(""), 5000);
                 } finally {
                     setIsSettingsSaving(false);
@@ -363,7 +363,7 @@
                     setOutputText("");
                 } catch (err) {
                     console.error("다이어리 저장 에러:", err);
-                    setError("저장하는데 문제가 생겼어 ㅠㅠ (Firestore Database 생성 확인!)");
+                    setError("저장하는데 문제가 생겼어 ㅠㅠ");
                     setTimeout(() => setError(""), 5000);
                 } finally {
                     setIsSaving(false);
@@ -382,7 +382,6 @@
                 }
             };
 
-            // 🔥 수동 앱 설치 함수
             const handleInstallClick = async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
@@ -397,16 +396,15 @@
                     
                     {/* 상단 버튼 영역 (앱 설치 & 설정) */}
                     <div className="w-full max-w-2xl flex justify-between mb-4 fade-in">
-                        {/* PWA 설치가 가능할 때만 뜨는 설치 버튼! */}
                         {deferredPrompt ? (
                             <button 
                                 onClick={handleInstallClick}
                                 className="text-pink-600 font-bold bg-pink-100 px-4 py-2 rounded-full gyaru-shadow-sm border-2 border-pink-300 hover:bg-pink-200 transition-all flex items-center gap-2 animate-bounce"
                             >
-                                📱 앱으로 설치하기
+                                📱 GAL! 앱 설치하기
                             </button>
                         ) : (
-                            <div className="text-pink-300 text-sm flex items-center gap-1 font-bold">
+                            <div className="text-pink-400 text-sm flex items-center gap-1 font-bold">
                                 <span>🌺</span> 갸루 파워 온!
                             </div>
                         )}
@@ -505,7 +503,7 @@
                     {/* Header */}
                     <header className="w-full max-w-2xl text-center mb-8 fade-in">
                         <h1 className="text-4xl md:text-5xl font-extrabold text-pink-500 mb-3 tracking-tight" style={{fontFamily: "'Gamja Flower', cursive"}}>
-                            ✨ 초긍정 갸루식 사고 변환기 ✨
+                            ✨ GAL is MIND ✨
                         </h1>
                         <p className="text-lg text-pink-700 font-medium bg-white/60 inline-block px-4 py-2 rounded-full gyaru-shadow-sm">
                             우울하고 힘든 생각? 전부 갸루 파워로 튕겨내자구! 💖✌️
@@ -564,7 +562,7 @@
                         </div>
                     )}
 
-                    {/* History Section - 로그인 안 되어있을 때 안내 문구 추가 */}
+                    {/* History Section */}
                     {!isAuthLoading && !user && (
                         <div className="w-full max-w-2xl text-center py-8 bg-white/50 rounded-3xl border-2 border-dashed border-pink-300 fade-in">
                             <p className="text-pink-500 font-bold text-lg mb-2">과거의 갸루 다이어리를 보고 싶다면?</p>
@@ -572,7 +570,6 @@
                         </div>
                     )}
 
-                    {/* History Section - 로그인 되어있고 기록이 있을 때 */}
                     {user && savedThoughts.length > 0 && (
                         <div className="w-full max-w-2xl fade-in mt-4">
                             <h3 className="text-2xl font-bold text-pink-600 mb-6 flex items-center gap-2">
