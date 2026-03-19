@@ -1,6 +1,6 @@
 {
-  "name": "초긍정 갸루식 사고 변환기",
-  "short_name": "갸루사고",
+  "name": "GAL is MIND",
+  "short_name": "GAL is MIND",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#fdf2f8",
