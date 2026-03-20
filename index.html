@@ -9,10 +9,10 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192.png">
 
-    <!-- 💖 폰트 수정: 통통하고 귀여운 일본어 폰트(Hachi Maru Pop) 추가! 💖 -->
+    <!-- 💖 폰트 수정: 끝이 둥글고 귀여운 Kiwi Maru 폰트로 교체! 💖 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Hachi+Maru+Pop&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Kiwi+Maru:wght@400;500&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,8 +33,8 @@
     <style>
         body {
             background-color: #fdf2f8; 
-            /* 🔥 일본어 폰트를 1순위로 둬서 한자와 가나가 통일되게 만들고, 한국어는 감자꽃으로 빠지게! 🔥 */
-            font-family: 'Hachi Maru Pop', 'Gamja Flower', cursive, sans-serif;
+            /* 🔥 일본어/한자는 Kiwi Maru로, 한국어는 Gamja Flower로 예쁘게 조합! 🔥 */
+            font-family: 'Kiwi Maru', 'Gamja Flower', cursive, sans-serif;
             background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
             background-size: 20px 20px;
         }
@@ -354,7 +354,7 @@
 
             const handleSave = async () => {
                 if (!user) {
-                    setError("앗! 다이어리에 긍정 에너지를 저장하려면 우측 상단 🌺버튼을 눌러 먼저 로그인해 줘! ✨");
+                    setError("앗! 다이어리에 긍정 에너지를 저장하려면 우측 상단 '設定' 버튼을 눌러 먼저 로그인해 줘! ✨");
                     setTimeout(() => setError(""), 5000);
                     return;
                 }
@@ -378,6 +378,7 @@
                         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
                     ]);
                     
+                    // 🔥 저장 완료 시 입력창 비우고, 임시 저장본도 싹 날려버려!
                     setInputText("");
                     setOutputText("");
                 } catch (err) {
@@ -436,12 +437,13 @@
                             </button>
                         </div>
 
+                        {/* 🔥 🌺 이모티콘 대신 設定 (설정) 텍스트로 변경! 다이어리 버튼과 똑같은 타원형 스타일 적용! 🔥 */}
                         <button 
                             onClick={() => setShowSettings(!showSettings)}
-                            className="text-2xl hover:scale-110 transition-transform flex items-center justify-center w-12 h-12 bg-white rounded-full gyaru-shadow-sm border-2 border-pink-200"
+                            className="text-pink-500 hover:text-pink-600 font-bold bg-white px-5 py-2 rounded-full gyaru-shadow-sm border-2 border-pink-200 hover:bg-pink-50 transition-all flex items-center gap-2 btn-press text-lg"
                             title="환경설정 및 로그인"
                         >
-                            🌺
+                            設定
                         </button>
                     </div>
 
@@ -454,7 +456,6 @@
                             >
                                 ✕
                             </button>
-                            {/* 🔥 설정 모달 제목에서 이모티콘 싹 빼고 '設定'로 통일! 🔥 */}
                             <h3 className="text-2xl font-bold text-pink-600 mb-4">
                                 設定
                             </h3>
@@ -614,7 +615,7 @@
                                     {!isAuthLoading && !user && (
                                         <div className="text-center py-12 bg-pink-50/50 rounded-2xl border-2 border-dashed border-pink-200">
                                             <p className="text-pink-500 font-bold text-xl mb-3">과거의 갸루 다이어리를 보고 싶다면?</p>
-                                            <p className="text-pink-400 text-sm mb-6">메인 화면 우측 상단 🌺버튼을 눌러서<br/>구글 연동을 먼저 진행해줘! ✨</p>
+                                            <p className="text-pink-400 text-sm mb-6">메인 화면 우측 상단 '設定' 버튼을 눌러서<br/>구글 연동을 먼저 진행해줘! ✨</p>
                                             <button 
                                                 onClick={() => { setShowDiary(false); setShowSettings(true); }} 
                                                 className="px-6 py-3 bg-pink-400 text-white font-bold rounded-full hover:bg-pink-500 transition-colors gyaru-shadow-sm btn-press"
