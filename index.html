@@ -9,10 +9,10 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="./icon-192.png">
 
-    <!-- 💖 귀여운 구글 폰트 (Gamja Flower) 추가 💖 -->
+    <!-- 💖 귀여운 한국어(Gamja Flower) + 일본어(Yomogi) 구글 폰트 동시 추가 💖 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Gamja+Flower&family=Yomogi&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +33,7 @@
     <style>
         body {
             background-color: #fdf2f8; 
-            font-family: 'Gamja Flower', cursive, sans-serif;
+            font-family: 'Gamja Flower', 'Yomogi', cursive, sans-serif;
             background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
             background-size: 20px 20px;
         }
@@ -88,7 +88,6 @@
     <script type="text/babel" data-type="module">
         const { useState, useEffect, useRef } = React;
 
-        // 🔥 회원님의 파이어베이스 설정값 🔥
         const firebaseConfig = {
           apiKey: "AIzaSyBI23qSkSmve5R39uD_02PYDSEYu_np7Fc",
           authDomain: "gal-is-mind.firebaseapp.com",
@@ -105,7 +104,6 @@
             const [appId, setAppId] = useState('default-gyaru-app');
             const [isAuthLoading, setIsAuthLoading] = useState(true); 
             
-            // 🔥 자동 임시 저장 마법! (새로고침해도 브라우저 기억에서 꺼내와!) 🔥
             const [inputText, setInputText] = useState(() => {
                 return localStorage.getItem('gyaru_draft') || "";
             });
@@ -126,7 +124,6 @@
             const [showDiary, setShowDiary] = useState(false);
             const [expandedId, setExpandedId] = useState(null);
 
-            // 🔥 글씨를 쓸 때마다 0.1초만에 브라우저(로컬 스토리지)에 몰래 저장해둠! 🔥
             useEffect(() => {
                 localStorage.setItem('gyaru_draft', inputText);
             }, [inputText]);
@@ -234,7 +231,7 @@
                 
                 const systemInstruction = `너는 타인의 시선에 절대 얽매이지 않고 오직 나 자신을 가장 사랑하는, 쿨하고 당당한 '본토 갸루(Gyaru)' 마인드의 화신이야!
 사용자가 고민, 우울, 불안, 자책 같은 부정적인 이야기를 하면, 사용자의 부정적 생각을 떨쳐내고 특유의 흔들림 없는 갸루식 사고로 변환해서 무한한 긍정과 자신감을 심어줘.
-사용자가 뿌듯하거나 기쁜 일 같은 긍정적인 이야기를 하면, 아낌없이 마구마구 칭찬하고 예뻐해서 자신감과 동기를 부여해줘.
+사용자가 뿌듯하거나 기쁜 일 같은 긍정적인 이야기를 하면 아낌없이 마구마구 칭찬하며 계속해서 정진할 수 있도록 자신감과 동기를 심어줘.
 사용자가 조언이나 해답을 구하는 질문으로 메시지를 마무리하면, 그에 대한 해결책이나 조언들을 적극적으로 제시해줘.
 
 [본토 갸루 마인드셋 핵심 규칙]
@@ -380,7 +377,6 @@
                         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
                     ]);
                     
-                    // 🔥 저장 완료 시 입력창 비우고, 임시 저장본도 싹 날려버려!
                     setInputText("");
                     setOutputText("");
                 } catch (err) {
@@ -444,7 +440,7 @@
                             className="text-2xl hover:scale-110 transition-transform flex items-center justify-center w-12 h-12 bg-white rounded-full gyaru-shadow-sm border-2 border-pink-200"
                             title="환경설정 및 로그인"
                         >
-                            設定
+                            🌺
                         </button>
                     </div>
 
@@ -533,10 +529,10 @@
 
                     {/* Header */}
                     <header className="w-full max-w-2xl text-center mb-8 fade-in">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-pink-500 mb-3 tracking-tight" style={{fontFamily: "'Gamja Flower', cursive"}}>
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-pink-500 mb-3 tracking-tight" style={{fontFamily: "'Gamja Flower', 'Yomogi', cursive"}}>
                             GAL is MIND！
                         </h1>
-                        <p className="text-lg text-pink-700 font-medium bg-white/60 inline-block px-7 py-2 rounded-full gyaru-shadow-sm">
+                        <p className="text-lg text-pink-700 font-medium bg-white/60 inline-block px-8 py-2 rounded-full gyaru-shadow-sm">
                             好きなこと真面目にやる( ˘ω˘ )✨<br />何度食らってもまた立ち上がる！！
                         </p>
                     </header>
@@ -598,7 +594,8 @@
                         <div className="fixed inset-0 bg-pink-100/80 backdrop-blur-sm z-50 flex justify-center items-center p-4 md:p-8 fade-in" onClick={() => setShowDiary(false)}>
                             <div className="bg-white w-full max-w-2xl h-[85vh] max-h-[800px] flex flex-col rounded-3xl border-4 border-pink-300 gyaru-shadow relative overflow-hidden" onClick={e => e.stopPropagation()}>
                                 
-                                <div className="p-5 md:p-6 border-b-7 border-pink-100 flex justify-between items-center bg-pink-50 shrink-0">
+                                {/* 🔥 다이어리 제목 하단 테두리를 마음껏 두껍게! (border-b-[7px] 적용) 🔥 */}
+                                <div className="p-5 md:p-6 border-b-[7px] border-pink-100 flex justify-between items-center bg-pink-50 shrink-0">
                                     <h3 className="text-2xl font-bold text-pink-600 flex items-center gap-2">
                                         <span>📖</span> ギャル日記☆
                                     </h3>
